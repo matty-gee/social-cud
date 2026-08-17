@@ -83,29 +83,22 @@ from scipy.spatial.distance import pdist, squareform
 from pathlib import Path
 import os
 
-def _find_project_root(start: Path) -> Path:
+def _find_project_root() -> Path:
     """
-    Walk upward from this file to find the repo/project root.
-    Heuristic: first parent containing expected top-level folders.
-    Optional override via env var: SNT_PROJECT_ROOT.
+    Return the root containing project data and generated artifacts.
+
+    The code repository and project data now live in separate locations.
+    Set SNT_PROJECT_ROOT to override the default data-project location.
     """
     env_root = os.environ.get("SNT_PROJECT_ROOT", "").strip()
     if env_root:
         return Path(env_root).expanduser().resolve()
 
-    # Heuristic markers (adjust if your repo uses different names)
-    must_exist = ("data", "results")     # strongest signals
-    any_exist  = ("figures", "masks", "analyses", ".git")
-
-    for p in [start.parent, *start.parents]:
-        if all((p / m).exists() for m in must_exist) and any((p / m).exists() for m in any_exist):
-            return p.resolve()
-
-    # Fallback: assume this file lives one level down from root (old '..' behavior)
-    return start.parent.parent.resolve()
+    return (Path.home() / "Desktop" / "Social" / "SocialCUD").resolve()
 
 _THIS_FILE = Path(__file__).resolve()
-PROJECT_ROOT = _find_project_root(_THIS_FILE)
+CODE_DIR = _THIS_FILE.parent.parent
+PROJECT_ROOT = _find_project_root()
 
 # -----------------------------
 # Canonical directories (absolute)
@@ -113,7 +106,11 @@ PROJECT_ROOT = _find_project_root(_THIS_FILE)
 
 user        = str(Path.home())
 base_dir    = str(PROJECT_ROOT)
-data_dir    = str(PROJECT_ROOT / "data")
+data_dir    = str(
+    Path(os.environ.get("SNT_DATA_DIR", PROJECT_ROOT / "data"))
+    .expanduser()
+    .resolve()
+)
 fig_dir     = str(PROJECT_ROOT / "figures")
 results_dir = str(PROJECT_ROOT / "results") 
 mask_dir    = str(PROJECT_ROOT / "masks" / "ROIs")
@@ -131,8 +128,10 @@ from utils_snt import *
 
 #-------------------------------- task info
 
-# load the task details file (*in-person only*)
-snt_df = pd.read_excel(f'{data_dir}/info/social-navigation-task.xlsx')
+# Load the task details file (*in-person only*). This code-owned reference file
+# lives with the shared module rather than in the external project data folder.
+TASK_INFO_PATH = _THIS_FILE.parent / "social-navigation-task.xlsx"
+snt_df = pd.read_excel(TASK_INFO_PATH)
 snt_df = snt_df[np.isfinite(snt_df['trial_num'])].sort_values(by='onset')
 decision_trials = snt_df[snt_df['slide_type'] == 'Decision']
 dtype_dict = {'decision_num': int, 'character_role_num': int, 'character_decision_num': int, 'onset': float}

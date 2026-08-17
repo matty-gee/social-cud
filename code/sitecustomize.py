@@ -21,7 +21,8 @@ This avoids per-notebook path hacks, editable installs, or packaging.
 HOW IT WORKS
 ------------
 - The conda environment sets:
-      PYTHONPATH=/Users/matty_gee/Desktop/SocialCUD/code
+      PYTHONPATH=/Users/matty_gee/Projects/SocialCUD/code
+      SNT_PROJECT_ROOT=/Users/matty_gee/Desktop/Social/SocialCUD
 - That makes this file importable at startup.
 - Python auto-imports `sitecustomize`.
 - We prepend the repo's `code/` directory to `sys.path`.
@@ -32,7 +33,9 @@ This file ONLY runs if the directory containing it is on PYTHONPATH.
 To enable it:
 
     conda activate social_cud
-    conda env config vars set PYTHONPATH=/Users/matty_gee/Desktop/SocialCUD/code
+    conda env config vars set \
+        PYTHONPATH=/Users/matty_gee/Projects/SocialCUD/code \
+        SNT_PROJECT_ROOT=/Users/matty_gee/Desktop/Social/SocialCUD
     conda deactivate
     conda activate social_cud
 
